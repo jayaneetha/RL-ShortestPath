@@ -1,12 +1,23 @@
-import math
 import random
 
 import numpy as np
+import matplotlib.pyplot as plt
+
+from utils.Utilities import find_location, get_reward_value, take_exploit_action, take_explore_action, take_action, \
+    print_averages
+from utils.Visualizations import plot_episode, plot_score
 
 goal_mark = 4
 start_mark = 2
 rewards = np.array([-1, -2, -3, -1])
 
+maze = np.matrix([
+    [1, 0, 1, 0],
+    [2, 1, 0, 1],
+    [0, 1, 1, 0],
+    [1, 0, 4, 1],
+    [0, 1, 0, 1]
+])
 # maze = np.matrix([
 #     [1 ,0, 0, 1, 1],
 #     [0, 2, 0, 1, 0],
@@ -15,14 +26,17 @@ rewards = np.array([-1, -2, -3, -1])
 #     [1, 0, 1, 1, 0],
 #     [1, 1, 1, 1, 4]
 # ])
-maze = np.matrix([
-    [1, 0, 1, 0],
-    [2, 1, 0, 1],
-    [0, 1, 1, 0],
-    [1, 0, 4, 1],
-    [0, 1, 0, 1]
-])
 
+# maze = np.matrix([
+#     [1 ,0, 0, 1, 1, 0],
+#     [0, 2, 0, 1, 0, 0],
+#     [0, 0, 0, 1, 0, 0],
+#     [0, 0, 1, 1, 0, 0],
+#     [1, 0, 0, 1, 0, 0],
+#     [1, 1, 1, 1, 1, 1],
+#     [1, 0, 1, 0, 0, 0],
+#     [0, 1, 0, 1, 0, 4]
+# ])
 actUp = 2
 actDown = 3
 actLeft = 0
@@ -52,106 +66,35 @@ min_exploration_rate = 0.01
 exploration_decay_rate = 0.001
 
 
-def get_rew_value(n1, n2):
-    if n1 == 4 or n1 == 2:
-        n1 = 0
-    if n2 == 4 or n2 == 2:
-        n2 = 0
-    if n1 == 0 and n2 == 0:  # p-p
-        return -1
-    if n1 == 0 and n2 == 1:  # p-h
-        return -3
-    if n1 == 1 and n2 == 0:  # h-p
-        return -1
-    if n1 == 1 and n2 == 1:  # h-h
-        return -2
-    return 0
-
-
-def find_location(number):
-    _r = np.where(maze == number)[0][0]
-    _c = np.where(maze == number)[1][0]
-    return _r, _c
-
-
-def take_explore_action(current_state):
-    while True:
-        random_action = random.randint(0, 3)
-        rew_ = rewardMat[current_state, random_action]
-        if not np.isnan(rew_):
-            return random_action
-
-
-def do_take_exploit_action(current_state, Q_):
-    while True:
-        try:
-            exploit_action = np.nanargmax(Q_)
-            rew_ = rewardMat[current_state, exploit_action]
-            if np.isnan(rew_):
-                Q_[exploit_action] = np.NAN
-                return do_take_exploit_action(current_state, Q_)
-            else:
-                return exploit_action
-        except ValueError as err:
-            print(err)
-            return np.NaN
-
-
-def take_exploit_action(current_state):
-    return do_take_exploit_action(current_state, np.array(Q[current_state, :]))
-
-
-def take_action(current_state, a):
-    new_state_ = 0
-    if a == 0:
-        new_state_ = current_state - 1
-    if a == 1:
-        new_state_ = current_state + 1
-    if a == 2:
-        new_state_ = current_state - mazeColumn
-    if a == 3:
-        new_state_ = current_state + mazeColumn
-
-    rew_ = rewardMat[current_state, a]
-
-    done_ = False
-    mx = math.floor(new_state_ / mazeColumn)
-    my = new_state_ % mazeColumn
-
-    if maze[mx, my] == goal_mark:
-        done_ = True
-
-    return new_state_, rew_, done_
-
-
 def populate_reward_matrix():
+    print("Population Reward Matrix")
     for i in range(0, mazeRow):
         for j in range(0, mazeColumn):
             stateIterator_ = (i * mazeColumn) + j  # Defining Current State
             if i > 0:
                 # top row
-                r = get_rew_value(maze[i, j], maze[i - 1, j])
+                r = get_reward_value(maze[i, j], maze[i - 1, j])
                 if maze[i - 1, j] == goal_mark:
                     r = rewForGoal
                 rewardMat[stateIterator_, actUp] = r
 
             if i < mazeRow - 1:
                 # bottom row
-                r = get_rew_value(maze[i, j], maze[i + 1, j])
+                r = get_reward_value(maze[i, j], maze[i + 1, j])
                 if maze[i + 1, j] == goal_mark:
                     r = rewForGoal
                 rewardMat[stateIterator_, actDown] = r
 
             if j > 0:
                 # left row
-                r = get_rew_value(maze[i, j], maze[i, j - 1])
+                r = get_reward_value(maze[i, j], maze[i, j - 1])
                 if maze[i, j - 1] == goal_mark:
                     r = rewForGoal
                 rewardMat[stateIterator_, actLeft] = r
 
             if j < mazeColumn - 1:
                 # right row
-                r = get_rew_value(maze[i, j], maze[i, j + 1])
+                r = get_reward_value(maze[i, j], maze[i, j + 1])
                 if maze[i, j + 1] == goal_mark:
                     r = rewForGoal
                 rewardMat[stateIterator_, actRight] = r
@@ -161,41 +104,40 @@ if __name__ == "__main__":
 
     populate_reward_matrix()
 
-    sx, sy = find_location(2)
+    sx, sy = find_location(maze, 2)
     start_state = (sx * mazeColumn) + sy
 
-    gx, gy = find_location(4)
+    gx, gy = find_location(maze, 4)
     goal_state = (gx * mazeColumn) + gy
 
     rewards_all_episodes = []
     # Q-learning algorithm
     episode_steps = []
     for episode in range(num_episodes):
-        if episode > 9998:
-            print(episode)
         # initialize new episode params
+        if episode % 1000 == 0:
+            print("Training Episode {}".format(episode))
+
         state = start_state
         done = False
         rewards_current_episode = 0
 
         step_actions = []
-        step_states = []
+        step_states = [state]
         for step in range(max_steps_per_episode):
             # Exploration-exploitation trade-off
             exploration_rate_threshold = random.uniform(0, 1)
             if exploration_rate_threshold > exploration_rate:
                 # exploit
-                action = take_exploit_action(state)
+                action = take_exploit_action(rewardMat, Q, state)
                 if np.isnan(action):
-                    action = take_explore_action(state)
+                    action = take_explore_action(rewardMat, state)
             else:
                 # explore
-                action = take_explore_action(state)
-
-            # print(state)
+                action = take_explore_action(rewardMat, state)
 
             # Take new action
-            new_state, reward, done = take_action(state, action)
+            new_state, reward, done = take_action(rewardMat, maze, state, action, goal_mark)
 
             # Update Q-table
             q_value = Q[state, action]
@@ -204,13 +146,16 @@ if __name__ == "__main__":
 
             # Set new state
             state = new_state
+            step_actions.append(action)
+            step_states.append(state)
 
             # Add new reward
             rewards_current_episode += reward
 
             if done:
                 break
-        episode_steps.append(step_actions)
+
+        episode_steps.append({"actions": step_actions, "states": step_states})
         # Exploration rate decay
         exploration_rate = min_exploration_rate + (max_exploration_rate - min_exploration_rate) * np.exp(
             -exploration_decay_rate * episode)
@@ -218,10 +163,10 @@ if __name__ == "__main__":
         rewards_all_episodes.append(rewards_current_episode)
 
     # Calculate and print the average reward per thousand episodes
-    rewards_per_thosand_episodes = np.split(np.array(rewards_all_episodes), num_episodes / 1000)
-    count = 1000
+    print_averages(rewards_all_episodes, num_episodes)
 
-    print("********Average reward per thousand episodes********\n")
-    for r in rewards_per_thosand_episodes:
-        print(count, ": ", str(sum(r / 1000)))
-        count += 1000
+    # Visualizations
+    highest_score_index = np.argmax(rewards_all_episodes)
+    print("Best Episode: {}".format(highest_score_index))
+    plot_episode(np.matrix(maze), episode_steps[highest_score_index]['states'])
+    plot_score(rewards_all_episodes)
