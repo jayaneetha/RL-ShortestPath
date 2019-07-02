@@ -1,7 +1,6 @@
 import random
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from utils.Utilities import find_location, get_reward_value, take_exploit_action, take_explore_action, take_action, \
     print_averages
