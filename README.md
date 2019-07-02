@@ -9,8 +9,8 @@ Reinfocement Learning Approach to solve Shortest Path Problem.
 
 ## Usage
 * Update the `maze` matrix
-** `0 - plain`
-** `1 - hill`
-** `2 - start point`
-** `4 - end point`
+  * `0 - plain`
+  * `1 - hill`
+  * `2 - start point`
+  * `4 - end point`
 * Run `python ShortestPath.py`
