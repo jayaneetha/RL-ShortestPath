@@ -214,7 +214,7 @@ class ShortestPathDeepQLearning:
         # Visualizations
         highest_score_index = np.argmax(rewards_all_episodes)
         print("Best Episode: {}".format(highest_score_index))
-        # plot_episode(np.matrix(self.maze), episode_steps[highest_score_index]['states'])
+        plot_episode(np.matrix(self.maze), episode_steps[highest_score_index]['states'])
         plot_score(rewards_all_episodes)
 
     def define_model(self):
