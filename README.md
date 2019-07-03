@@ -14,4 +14,4 @@ Reinfocement Learning Approach to solve Shortest Path Problem.
   * `1 - hill`
   * `2 - start point`
   * `4 - end point`
-* Run `python ShortestPath.py`
+* Run `python Run.py`
