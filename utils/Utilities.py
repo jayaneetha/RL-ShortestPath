@@ -1,12 +1,4 @@
 import numpy as np
-import random
-import math
-
-
-def find_location(maze, number):
-    _r = np.where(maze == number)[0][0]
-    _c = np.where(maze == number)[1][0]
-    return _r, _c
 
 
 def get_reward_value(n1, n2):
@@ -25,55 +17,10 @@ def get_reward_value(n1, n2):
     return 0
 
 
-def take_explore_action(reward_mat, current_state):
-    while True:
-        random_action = random.randint(0, 3)
-        rew_ = reward_mat[current_state, random_action]
-        if not np.isnan(rew_):
-            return random_action
-
-
-def do_take_exploit_action(reward_mat, current_state, Q_):
-    while True:
-        try:
-            exploit_action = np.nanargmax(Q_)
-            rew_ = reward_mat[current_state, exploit_action]
-            if np.isnan(rew_):
-                Q_[exploit_action] = np.NAN
-                return do_take_exploit_action(reward_mat, current_state, Q_)
-            else:
-                return exploit_action
-        except ValueError as err:
-            print(err)
-            return np.NaN
-
-
-def take_exploit_action(reward_mat, Q, current_state):
-    return do_take_exploit_action(reward_mat, current_state, np.array(Q[current_state, :]))
-
-
-def take_action(reward_mat, maze, current_state, action_, goal_mark):
-    mazeColumn = maze.shape[1]
-    new_state_ = 0
-    if action_ == 0:
-        new_state_ = current_state - 1
-    if action_ == 1:
-        new_state_ = current_state + 1
-    if action_ == 2:
-        new_state_ = current_state - mazeColumn
-    if action_ == 3:
-        new_state_ = current_state + mazeColumn
-
-    rew_ = reward_mat[current_state, action_]
-
-    done_ = False
-    mx = math.floor(new_state_ / mazeColumn)
-    my = new_state_ % mazeColumn
-
-    if maze[mx, my] == goal_mark:
-        done_ = True
-
-    return new_state_, rew_, done_
+def find_location(maze, number):
+    _r = np.where(maze == number)[0][0]
+    _c = np.where(maze == number)[1][0]
+    return _r, _c
 
 
 def print_averages(rewards_all_episodes, num_episodes):
